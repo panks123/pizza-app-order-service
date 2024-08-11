@@ -15,4 +15,11 @@ export class CustomerService {
         }
         return customer;
     }
+
+    updateCustomerAddress = async (customerId: string, userId: string, address: string, isDefault: boolean = false) => {
+        const customer = await customerModel.findOneAndUpdate({_id: customerId, userId}, {
+            $push: {addresses: {text: address, isDefault}}
+        }, {new: true});
+        return customer;
+    }
 }

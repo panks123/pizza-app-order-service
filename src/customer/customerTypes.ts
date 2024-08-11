@@ -8,7 +8,7 @@ export interface Customer {
     firstName: string;
     lastName: string;
     email: string;
-    addressess: Address[];
+    addresses: Address[];
     createdAt: Date;
     updatedAt: Date;
 }

@@ -29,7 +29,7 @@ const customerSchema = new mongoose.Schema<Customer>({
         type: String,
         required: true,
     },
-    addressess: {
+    addresses: {
         type: [addressSchema],
         required: false,
     },
