@@ -28,4 +28,26 @@ export class CouponController {
     return res.json(coupon);
   };
 
+  verify = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const { code, tenantId } = req.body;
+    this.logger.info(`Verifying coupon with code: ${code}, tenatId: ${tenantId}`);
+    const coupon = await this.couponService.findByCodeAndTenant(code, tenantId);
+    if(!coupon) {
+      const error = createHttpError(404, "Coupon not found");
+      return next(error);
+    }
+
+    const isValid = await this.couponService.verifyExpiry(coupon);
+    this.logger.info(`Coupon is valid: ${isValid}`);
+    if(!isValid) {
+        return res.json({
+            valid: isValid,
+            discount: 0,
+        })
+    }
+    return res.json({
+        valid: isValid,
+        discount: coupon.discount,
+    })
+  }
 }

@@ -17,4 +17,10 @@ router.post(
     asyncWrapper(couponController.create)
 );
 
+router.post(
+    "/verify",
+    authenticate,
+    asyncWrapper(couponController.verify)
+)
+
 export default router;
