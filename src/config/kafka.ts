@@ -1,6 +1,7 @@
 import { Logger } from "winston";
 import { MessageBroker } from "../types/broker";
 import { Consumer, EachMessagePayload, Kafka } from "kafkajs";
+import { handleProductUpdate } from "../product-cache/product-update-handler";
 
 export class KafkaBroker implements MessageBroker {
     private consumer: Consumer;
@@ -35,11 +36,21 @@ export class KafkaBroker implements MessageBroker {
         await this.consumer.subscribe({ topics, fromBeginning });
         await this.consumer.run({
             eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
-                console.log({
+                this.logger.info("A new kafka message arrived", {
                     value: message.value.toString(),
                     topic,
                     partition,
                 });
+                switch (topic) {
+                    case 'product': 
+                        await handleProductUpdate(message.value.toString());
+                        return;
+                    case 'topping':
+                        return;
+                    default:
+                        console.log(`Do nothing, Unknown topic ${topic}`);
+                        return;
+                }
             }
         })
     }
