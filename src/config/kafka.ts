@@ -2,6 +2,7 @@ import { Logger } from "winston";
 import { MessageBroker } from "../types/broker";
 import { Consumer, EachMessagePayload, Kafka } from "kafkajs";
 import { handleProductUpdate } from "../product-cache/product-update-handler";
+import { handleToppingUpdate } from "../topping-cache/topping-update-handler";
 
 export class KafkaBroker implements MessageBroker {
     private consumer: Consumer;
@@ -46,6 +47,7 @@ export class KafkaBroker implements MessageBroker {
                         await handleProductUpdate(message.value.toString());
                         return;
                     case 'topping':
+                        await handleToppingUpdate(message.value.toString());
                         return;
                     default:
                         console.log(`Do nothing, Unknown topic ${topic}`);

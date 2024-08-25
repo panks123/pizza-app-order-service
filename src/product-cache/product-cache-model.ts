@@ -21,6 +21,6 @@ const procuctCacheSchema = new mongoose.Schema<ProductPricingCache>({
         type: Object,
         of: priceSchema,
     }
-});
+}, { timestamps: true });
 
 export default mongoose.model<ProductPricingCache>('ProductPricingCache', procuctCacheSchema, 'productCache');

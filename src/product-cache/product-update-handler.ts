@@ -7,7 +7,7 @@ export const handleProductUpdate = async (value: string) => {
         product = JSON.parse(value);
     }
     catch (e) {
-        console.log(e);
+        console.log("JSON parse Error", e);
         return false;
     }
     if(product) {
