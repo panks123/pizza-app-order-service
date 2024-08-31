@@ -18,7 +18,7 @@ export class OrderService {
             }
             catch(err) {
                 // else rollback the transaction
-                session.abortTransaction();
+                await session.abortTransaction();
                 throw err;
             }
             finally {

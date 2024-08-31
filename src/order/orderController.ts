@@ -52,7 +52,7 @@ export class OrderController {
             orderStatus: OrderStatus.RECIEVED,
             paymentStatus: PaymentStatus.PENDING,
         });
-        
+
         return res.json({ newOrder });
     }
     
@@ -111,7 +111,6 @@ export class OrderController {
         let discountPercentage = 0;
         if(discountCode && tenantId) {
             const discount = await couponModel.findOne({code:discountCode, tenantId});
-            console.log("===>discount", discount);
             if(discount) {
                 const currentDate = new Date();
                 const couponExpDate = new Date(discount.validUpto);

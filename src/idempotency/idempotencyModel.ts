@@ -13,7 +13,7 @@ const idempotencySchema = new mongoose.Schema({
 { timestamps: true },
 );
 
-idempotencySchema.index({ createdAt: 1 }, { expireAfterSeconds: 60  }); // 48 hours = 42 * 60 * 60
+idempotencySchema.index({ createdAt: 1 }, { expireAfterSeconds: 48 * 60 * 60  }); // 48 hours = 48 * 60 * 60
 idempotencySchema.index({ key: 1 }, { unique: true });
 
 export default mongoose.model("Idempotency", idempotencySchema);
