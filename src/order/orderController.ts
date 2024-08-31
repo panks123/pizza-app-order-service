@@ -35,7 +35,10 @@ export class OrderController {
         const taxAmount = this.getTaxAamount(priceAfterDiscount);
         const deliveryCharges = this.getDeliveryCharges();
         const finalTotal = priceAfterDiscount + taxAmount + deliveryCharges;
-        const newOrder = await this.orderService.createOrder({
+
+        const idempotencyKey = req.headers['idempotency-key'] as string;
+
+        const newOrder = await this.orderService.createOrder(idempotencyKey, {
             cart,
             customerId,
             address,
@@ -49,6 +52,7 @@ export class OrderController {
             orderStatus: OrderStatus.RECIEVED,
             paymentStatus: PaymentStatus.PENDING,
         });
+        
         return res.json({ newOrder });
     }
     
