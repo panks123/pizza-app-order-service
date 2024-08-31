@@ -3,19 +3,55 @@ import { Logger } from "winston";
 import { CartItem, ProductPricingCache, Topping, ToppingPriceCache } from "../types";
 import productCacheModel from "../product-cache/product-cache-model";
 import toppingCacheModel from "../topping-cache/topping-cache-model";
+import couponModel from "../coupon/couponModel";
+import { OrderService } from "./orderService";
+import { OrderStatus, PaymentStatus } from "./orderTypes";
 
 export class OrderController {
     constructor(
-        // private orderService: OrderService,
+        private orderService: OrderService,
         private logger: Logger
     ) {}
 
     createOrder = async (req: Request, res: Response) => {
         // TODO: Validate request body
-        const totalOrderPrice = await this.calculateTotalPrice(req.body.cart);
-        return res.json({totalOrderPrice});
-    }
+        const {
+            cart,
+            couponCode,
+	        tenantId,
+	        comment,
+	        address,
+	        customerId,
+	        paymentMode,
+        } = req.body;
+        const totalOrderPrice = await this.calculateTotalPrice(cart);
+        let discountPercentage = 0;
+        if(couponCode && tenantId) {
+            discountPercentage = await this.getDiscountPercentage(couponCode, tenantId);
+        }
+        const discountAmount = Math.round(totalOrderPrice * discountPercentage / 100);
 
+        const priceAfterDiscount = totalOrderPrice - discountAmount;
+        const taxAmount = this.getTaxAamount(priceAfterDiscount);
+        const deliveryCharges = this.getDeliveryCharges();
+        const finalTotal = priceAfterDiscount + taxAmount + deliveryCharges;
+        const newOrder = await this.orderService.createOrder({
+            cart,
+            customerId,
+            address,
+            deliveryCharges,
+            discount: discountAmount,
+            taxes: taxAmount,
+            total: finalTotal,
+            paymentMode,
+            comment,
+            tenantId,
+            orderStatus: OrderStatus.RECIEVED,
+            paymentStatus: PaymentStatus.PENDING,
+        });
+        return res.json({ newOrder });
+    }
+    
     private calculateTotalPrice = async (cart: CartItem[]): Promise<number> => {
         const productIds = cart.map(item => item._id);
         // Todo - do error handling
@@ -65,5 +101,34 @@ export class OrderController {
             // TODO: if topping does not exist in the cache, call catalog service to get topping details
             return topping.price;
         }
+    }
+
+    private getDiscountPercentage = async (discountCode: string, tenantId: string): Promise<number> => {
+        let discountPercentage = 0;
+        if(discountCode && tenantId) {
+            const discount = await couponModel.findOne({code:discountCode, tenantId});
+            console.log("===>discount", discount);
+            if(discount) {
+                const currentDate = new Date();
+                const couponExpDate = new Date(discount.validUpto);
+                if(couponExpDate > currentDate) {
+                    discountPercentage = Number(discount.discount); 
+                }
+            }
+
+            return discountPercentage;
+        }
+    }
+
+    private getTaxAamount = (price: number): number => {
+        // TODO - Fetch from the tenant details (when available)
+        const TAX_PERCENTAGE = 5;  // TODO: Move to server
+        return Math.round(price * TAX_PERCENTAGE / 100);
+    }
+
+    private getDeliveryCharges = (): number => {
+        // TODO - Fetch from the tenant details (when available)
+        const DELIVERY_CHARGES = 50;  // TODO: Move to server
+        return DELIVERY_CHARGES;
     }
 }

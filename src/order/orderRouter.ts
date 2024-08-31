@@ -3,10 +3,11 @@ import authenticate from '../common/middleware/authenticate';
 import { asyncWrapper } from '../utils';
 import { OrderController } from './orderController';
 import logger from '../config/logger';
+import { OrderService } from './orderService';
 
 const router = express.Router();
-
-const orderController = new OrderController(logger);
+const orderService = new OrderService();
+const orderController = new OrderController(orderService, logger);
 
 router.post(
     '/',
