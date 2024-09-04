@@ -9,9 +9,24 @@ export class StripePaymentGateway implements PaymentGateway {
     }
     createSession= async (options: PaymentOptions) => {
         const session = await this.stripe.checkout.sessions.create({
+            // customer_email: options.customerInfo.email, // TODO: Change this - get from customrr data
             metadata: {
                 orderId: options.orderId,
             },
+            billing_address_collection: "required", // TODO: Change this,
+            // payment_intent_data: { // TODO - add address info from customer data
+            //     shipping: {
+            //         name: "Pankaj K",
+            //         address: {
+            //             line1: "Address line 1",
+            //             line2: "Address line 2", // Optional
+            //             city: "City", // Optional
+            //             state: "Maharashtra", // Optional
+            //             postal_code: "411001", // Optional
+            //             country: "IN" // Optional
+            //         }
+            //     }
+            // }
             line_items: [
                 {
                     price_data: {
