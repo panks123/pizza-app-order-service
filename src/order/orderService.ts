@@ -2,11 +2,15 @@ import mongoose from "mongoose";
 import { OrderModel } from "./orderModel";
 import { Order } from "./orderTypes";
 import idempotencyModel from "../idempotency/idempotencyModel";
+import { PaymentGateway, PaymentSession } from "../payment/paymentTypes";
 
 export class OrderService {
-    createOrder = async (idempotencyKey: string, orderDetails: Order): Promise<Order[]> => {
+    constructor(private paymentGateway: PaymentGateway) {}
+    
+    // createOrder = async (idempotencyKey: string, orderDetails: Order): Promise<Order[]> => {
+    createOrder = async (idempotencyKey: string, orderDetails: Order): Promise<PaymentSession> => {
         const idempotency = await idempotencyModel.findOne({ key: idempotencyKey });
-        let newOrder: Order[] = idempotency ? [idempotency.response] : [];
+        let newOrder = idempotency ? [idempotency.response] : [];
         if(!idempotency) {
             const session = await mongoose.startSession();
             session.startTransaction(); 
@@ -26,7 +30,17 @@ export class OrderService {
             }
         }
 
-        return newOrder;
+        const paymentSession = await this.paymentGateway.createSession({
+            amount: orderDetails.total,
+            orderId: newOrder[0]._id.toString(),
+            tenantId: orderDetails.tenantId,
+            currency: 'inr',
+            idempotencyKey,
+        });
+
+        return paymentSession;
+
+        // return newOrder;
         
     }
 }

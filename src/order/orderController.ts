@@ -38,7 +38,8 @@ export class OrderController {
 
         const idempotencyKey = req.headers['idempotency-key'] as string;
 
-        const newOrder = await this.orderService.createOrder(idempotencyKey, {
+        // const newOrder = await this.orderService.createOrder(idempotencyKey, {
+        const paymentSession = await this.orderService.createOrder(idempotencyKey, {
             cart,
             customerId,
             address,
@@ -53,7 +54,9 @@ export class OrderController {
             paymentStatus: PaymentStatus.PENDING,
         });
 
-        return res.json({ newOrder });
+        // return res.json({ newOrder });
+        // Todo - Update Order document -paymentId = session.id
+        return res.json({ paymentUrl: paymentSession.paymentUrl });
     }
     
     private calculateTotalPrice = async (cart: CartItem[]): Promise<number> => {
