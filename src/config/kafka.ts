@@ -1,18 +1,48 @@
 import { Logger } from "winston";
 import { MessageBroker } from "../types/broker";
-import { Consumer, EachMessagePayload, Kafka } from "kafkajs";
+import { Consumer, EachMessagePayload, Kafka, Producer } from "kafkajs";
 import { handleProductUpdate } from "../product-cache/product-update-handler";
 import { handleToppingUpdate } from "../topping-cache/topping-update-handler";
 
 export class KafkaBroker implements MessageBroker {
     private consumer: Consumer;
+    private producer: Producer;
+
     constructor(clientId: string, brokers: string[], private logger: Logger) {
         const kafka = new Kafka({
             clientId,
             brokers,
         });
+
+        this.producer = kafka.producer();
         this.consumer = kafka.consumer({ groupId: clientId });
     }
+
+    /**
+     * Connect the producer
+     */
+    async connectProducer() {
+        await this.producer.connect();
+    }
+
+    /**
+     * Disconnect the producer
+     */
+    async disconnectProducer() {
+        if(this.producer)
+            await this.producer.disconnect();
+    }
+
+    /**
+     * Send a message to the topic
+     * @param topic 
+     * @param message
+     * @throws Error when the producer is not connected
+     */
+    async sendMessage(topic: string, message: string) {
+        await this.producer.send({ topic, messages: [{ value: message }] });
+    }
+
 
     /**
      * Connect the consumer
