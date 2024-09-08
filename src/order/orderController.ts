@@ -55,9 +55,9 @@ export class OrderController {
 
         // Todo - Update Order document -paymentId = session.id
         if(serviceResponse.paymentSession) {
-            return res.json({ orderDetails: serviceResponse.orderDetails, paymentUrl: serviceResponse.paymentSession.paymentUrl });
+            return res.json({ paymentUrl: serviceResponse.paymentSession.paymentUrl });
         }
-        return res.json({ orderDetails: serviceResponse.orderDetails, paymentUrl: null });
+        return res.json({  paymentUrl: null });
     }
     
     private calculateTotalPrice = async (cart: CartItem[]): Promise<number> => {
