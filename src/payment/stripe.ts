@@ -12,6 +12,7 @@ export class StripePaymentGateway implements PaymentGateway {
             // customer_email: options.customerInfo.email, // TODO: Change this - get from customrr data
             metadata: {
                 orderId: options.orderId,
+                tenantId: options.tenantId,
             },
             billing_address_collection: "required", // TODO: Change this,
             // payment_intent_data: { // TODO - add address info from customer data
@@ -44,8 +45,8 @@ export class StripePaymentGateway implements PaymentGateway {
                 }
             ],
             mode: 'payment',
-            success_url: `${config.get('frontend.clientUI')}/payment/success=true&orderId=${options.orderId}&tenantId=${options.tenantId}`,
-            cancel_url: `${config.get('frontend.clientUI')}/payment/success=false&orderId=${options.orderId}&tenantId=${options.tenantId}`,
+            success_url: `${config.get('frontend.clientUI')}/payment?success=true&orderId=${options.orderId}&tenantId=${options.tenantId}`,
+            cancel_url: `${config.get('frontend.clientUI')}/payment?success=false&orderId=${options.orderId}&tenantId=${options.tenantId}`,
         }, {
             idempotencyKey: options.idempotencyKey,
         });
