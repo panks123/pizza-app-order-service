@@ -22,4 +22,9 @@ export class CustomerService {
         }, {new: true});
         return customer;
     }
+
+    getCustomerByUserId = async (userId: string) => {
+        const customer = await customerModel.findOne({userId});
+        return customer;
+    }
 }

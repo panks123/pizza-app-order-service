@@ -103,3 +103,8 @@ export interface CartItem
   qty: number;
   hash?: string;
 }
+
+export interface PaginateQuery {
+  page: number;
+  limit: number;
+}

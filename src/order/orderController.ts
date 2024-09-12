@@ -1,15 +1,18 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { Logger } from "winston";
-import { CartItem, ProductPricingCache, Topping, ToppingPriceCache } from "../types";
+import { AuthRequest, CartItem, ProductPricingCache, Topping, ToppingPriceCache } from "../types";
 import productCacheModel from "../product-cache/product-cache-model";
 import toppingCacheModel from "../topping-cache/topping-cache-model";
 import couponModel from "../coupon/couponModel";
 import { OrderService } from "./orderService";
 import { OrderStatus, PaymentStatus } from "./orderTypes";
+import createHttpError from "http-errors";
+import { CustomerService } from "../customer/customerService";
 
 export class OrderController {
     constructor(
         private orderService: OrderService,
+        private customerService: CustomerService,
         private logger: Logger
     ) {}
 
@@ -137,5 +140,29 @@ export class OrderController {
         // TODO - Fetch from the tenant details (when available)
         const DELIVERY_CHARGES = 50;  // TODO: Move to server
         return DELIVERY_CHARGES;
+    }
+
+    getMine = async (req: AuthRequest, res: Response, next: NextFunction) => {
+        const { sub: userId} = req.auth;
+
+        const {page, limit} = req.query;
+
+        if(!userId) {
+            return next(createHttpError(401, "Unauthorized"));
+        }
+
+        const customer = await this.customerService.getCustomerByUserId(userId);
+        if(!customer) {
+            return next(createHttpError(404, "Customer not found"));
+        }
+
+        const customerOrders = await this.orderService.getOrdersByCustomerId(
+            customer._id,
+            {
+                page: page ? parseInt(page as string) : 1,
+                limit: limit ? parseInt(limit as string) : 10,
+            },
+        ); 
+        return res.json(customerOrders);
     }
 }

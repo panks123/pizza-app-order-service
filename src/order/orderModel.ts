@@ -1,4 +1,5 @@
-import mongoose from 'mongoose';
+import mongoose, { AggregatePaginateModel } from "mongoose";
+import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 import { Order, OrderStatus, PaymentMode, PaymentStatus } from './orderTypes';
 import { CartItem, Topping } from '../types';
 
@@ -114,4 +115,6 @@ const orderSchema = new mongoose.Schema<Order>({
     },
 });
 
-export const OrderModel = mongoose.model<Order>("Order", orderSchema);
+orderSchema.plugin(aggregatePaginate);
+
+export const OrderModel = mongoose.model<Order, AggregatePaginateModel<Order>>("Order", orderSchema);

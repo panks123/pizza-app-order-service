@@ -4,6 +4,8 @@ import { Order, PaymentMode } from "./orderTypes";
 import idempotencyModel from "../idempotency/idempotencyModel";
 import { PaymentGateway, PaymentSession } from "../payment/paymentTypes";
 import { MessageBroker } from "../types/broker";
+import { PaginateQuery } from "../types";
+import { paginationLabels } from "../config/paginateLabels";
 
 export class OrderService {
   constructor(
@@ -56,5 +58,28 @@ export class OrderService {
     await this.broker.sendMessage("order", JSON.stringify(newOrder[0]));
     return { orderDetails: newOrder[0], paymentSession: null };
     // return newOrder;
+  };
+
+  getOrdersByCustomerId = async (
+    customerId: mongoose.Types.ObjectId,
+    paginateQuery: PaginateQuery,
+  ) => {
+    const aggregate = OrderModel.aggregate([
+      {
+        $match: { customerId },
+      },
+      {
+        $project: {
+          cart: 0,
+        }
+      }
+    ]);
+
+    const orders = await OrderModel.aggregatePaginate(aggregate, {
+      ...paginateQuery,
+      customLabels: paginationLabels,
+    })
+
+    return orders;
   };
 }
