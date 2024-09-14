@@ -27,4 +27,10 @@ router.get(
     asyncWrapper(orderController.getMine)
 )
 
+router.get(
+    '/:orderId',
+    authenticate,
+    asyncWrapper(orderController.getOrderDetails)
+)
+
 export default router;

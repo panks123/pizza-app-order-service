@@ -72,6 +72,11 @@ export class OrderService {
         $project: {
           cart: 0,
         }
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
       }
     ]);
 
@@ -81,5 +86,10 @@ export class OrderService {
     })
 
     return orders;
+  };
+
+  getOrderById = async (orderId: string) => {
+    const order = await OrderModel.findOne({ _id: orderId }, { cart: 0 });
+    return order;
   };
 }

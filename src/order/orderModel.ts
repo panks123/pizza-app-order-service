@@ -113,7 +113,7 @@ const orderSchema = new mongoose.Schema<Order>({
         type: String,
         required: false,
     },
-});
+}, {timestamps: true});
 
 orderSchema.plugin(aggregatePaginate);
 

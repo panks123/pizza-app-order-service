@@ -8,6 +8,7 @@ import { OrderService } from "./orderService";
 import { OrderStatus, PaymentStatus } from "./orderTypes";
 import createHttpError from "http-errors";
 import { CustomerService } from "../customer/customerService";
+import { Roles } from "../common/constants";
 
 export class OrderController {
     constructor(
@@ -164,5 +165,44 @@ export class OrderController {
             },
         ); 
         return res.json(customerOrders);
+    }
+
+    getOrderDetails = async (req: AuthRequest, res: Response, next: NextFunction) => {
+        const { sub: userId, tenant, role} = req.auth;
+        const {orderId} = req.params;
+
+        const order = await this.orderService.getOrderById(orderId);
+        if(!order) {
+            return next(createHttpError(400, "Order does not exist"));
+        }
+
+        if(role === Roles.ADMIN) {
+            return res.json(order);
+        }
+
+        else if(role === Roles.MANAGER) {
+            const isMyRestaurantOrder = tenant === order.tenantId;
+            if(isMyRestaurantOrder) {
+                return res.json(order);
+            }
+            else {
+                return next(createHttpError(403, "Unauthorized"));
+            }
+        }
+
+        else if(role === Roles.CUSTOMER) {
+            const customer = await this.customerService.getCustomerByUserId(userId);
+            if(!customer) {
+                return next(createHttpError(400, "Customer does not exist"));
+            }
+            const isMyOrder = customer._id === order.customerId;
+            if(isMyOrder) {
+                return res.json(order);
+            }
+        }
+
+        else {
+            return next(createHttpError(403, "Operation not allowed"));
+        }
     }
 }
