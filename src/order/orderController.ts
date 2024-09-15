@@ -170,8 +170,14 @@ export class OrderController {
     getOrderDetails = async (req: AuthRequest, res: Response, next: NextFunction) => {
         const { sub: userId, tenant, role} = req.auth;
         const {orderId} = req.params;
+        const fields = req.query.fields ? req.query.fields.toString().split(',') : [];
 
-        const order = await this.orderService.getOrderById(orderId);
+        const projection = fields.reduce((acc, item) => {
+            acc[item] = 1;
+            return acc;
+        }, {});
+
+        const order = await this.orderService.getOrderById(orderId, projection);
         if(!order) {
             return next(createHttpError(400, "Order does not exist"));
         }

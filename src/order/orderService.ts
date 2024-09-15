@@ -88,8 +88,8 @@ export class OrderService {
     return orders;
   };
 
-  getOrderById = async (orderId: string) => {
-    const order = await OrderModel.findOne({ _id: orderId }, { cart: 0 });
+  getOrderById = async (orderId: string, projection: { [key: string]: 0 | 1 }) => {
+    const order = await OrderModel.findOne({ _id: orderId }, projection);
     return order;
   };
 }
