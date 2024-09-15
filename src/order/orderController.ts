@@ -177,7 +177,7 @@ export class OrderController {
             return acc;
         }, {});
 
-        const order = await this.orderService.getOrderById(orderId, projection);
+        const order = await this.orderService.getOrderById(orderId, {...projection, customerId: 1});
         if(!order) {
             return next(createHttpError(400, "Order does not exist"));
         }
@@ -192,7 +192,7 @@ export class OrderController {
                 return res.json(order);
             }
             else {
-                return next(createHttpError(403, "Unauthorized"));
+                return next(createHttpError(403, "Operation Not Allowed"));
             }
         }
 
@@ -201,9 +201,12 @@ export class OrderController {
             if(!customer) {
                 return next(createHttpError(400, "Customer does not exist"));
             }
-            const isMyOrder = customer._id === order.customerId;
+            const isMyOrder = customer._id.toString() === order.customerId._id.toString();
             if(isMyOrder) {
                 return res.json(order);
+            }
+            else {
+                return next(createHttpError(400, "Order does not exist"));
             }
         }
 
