@@ -167,6 +167,41 @@ export class OrderController {
         return res.json(customerOrders);
     }
 
+    getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
+        const { tenant: tenantId, role} = req.auth;
+        const {page, limit} = req.query;
+        if(role === Roles.CUSTOMER) return next(createHttpError(403, "Forbidden"));  // TODO: Merge the logic of getMine here
+
+        if(role === Roles.ADMIN) {
+            const tenantId = req.query.tenantId as string;
+            const filters = {};
+            if(tenantId) {
+                filters["tenantId"] = tenantId;
+            }
+            const ordersData = await this.orderService.getOrders(filters, {
+                page: page ? parseInt(page as string) : 1,
+                limit: limit ? parseInt(limit as string) : 10,
+            });
+
+            return res.json(ordersData);
+        }
+
+        if(role === Roles.MANAGER) {
+            const filters = {};
+            if(tenantId) {
+                filters["tenantId"] = tenantId;
+            }
+            const ordersData = await this.orderService.getOrders(filters, {
+                page: page ? parseInt(page as string) : 1,
+                limit: limit ? parseInt(limit as string) : 10,
+            });
+
+            return res.json(ordersData);
+        }
+
+        return next(createHttpError(403, "Forbidden"));
+    }
+
     getOrderDetails = async (req: AuthRequest, res: Response, next: NextFunction) => {
         const { sub: userId, tenant, role} = req.auth;
         const {orderId} = req.params;

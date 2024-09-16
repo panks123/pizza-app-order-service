@@ -71,27 +71,71 @@ export class OrderService {
       {
         $project: {
           cart: 0,
-        }
+        },
       },
       {
         $sort: {
           createdAt: -1,
         },
-      }
+      },
     ]);
 
     const orders = await OrderModel.aggregatePaginate(aggregate, {
       ...paginateQuery,
       customLabels: paginationLabels,
-    })
+    });
 
     return orders;
   };
 
-  getOrderById = async (orderId: string, projection: { [key: string]: 0 | 1 }) => {
+  getOrders = async (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    matchFilters: { [key: string]: any },
+    paginateQuery: PaginateQuery,
+  ) => {
+    const aggregate = OrderModel.aggregate([
+      {
+        $match: matchFilters,
+      },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "customerId",
+          foreignField: "_id",
+          as: "customerInfo",
+        },
+      },
+      {
+        $unwind: { path: '$customerInfo', preserveNullAndEmptyArrays: true },
+      },
+      {
+        $project: {
+          cart: 0,
+          __v: 0,
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+    ]);
+
+    const orders = await OrderModel.aggregatePaginate(aggregate, {
+      ...paginateQuery,
+      customLabels: paginationLabels,
+    });
+
+    return orders;
+  };
+
+  getOrderById = async (
+    orderId: string,
+    projection: { [key: string]: 0 | 1 },
+  ) => {
     const order = await OrderModel.findOne({ _id: orderId }, projection)
-    .populate("customerId", "_id firstName lastName email")
-    .exec();
+      .populate("customerId", "_id firstName lastName email")
+      .exec();
     return order;
   };
 }

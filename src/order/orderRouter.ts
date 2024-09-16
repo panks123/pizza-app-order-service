@@ -22,6 +22,12 @@ router.post(
 )
 
 router.get(
+    '/',
+    authenticate,
+    asyncWrapper(orderController.getAll)
+)
+
+router.get(
     '/mine',
     authenticate,
     asyncWrapper(orderController.getMine)
