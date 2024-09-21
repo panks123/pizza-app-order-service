@@ -81,6 +81,10 @@ const orderSchema = new mongoose.Schema<Order>(
       ref: "Customer",
       required: true,
     },
+    price: {
+      type: Number,
+      required: true,
+    },
     total: {
       type: Number,
       required: true,
@@ -88,6 +92,11 @@ const orderSchema = new mongoose.Schema<Order>(
     discount: {
       type: Number,
       required: true,
+    },
+    couponCode: {
+      type: String,
+      required: false,
+      default: null,
     },
     taxes: {
       type: Number,

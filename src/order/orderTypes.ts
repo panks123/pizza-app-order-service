@@ -24,8 +24,10 @@ export enum PaymentStatus {
 export interface Order {
     cart: CartItem[];
     customerId: mongoose.Types.ObjectId;
+    price: number;
     total: number;
     discount: number;
+    couponCode?: string;
     taxes: number;
     deliveryCharges: number;
     address: string;
