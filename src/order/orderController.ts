@@ -251,4 +251,32 @@ export class OrderController {
             return next(createHttpError(403, "Operation not allowed"));
         }
     }
+
+    changeStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
+        const {tenant: tenantId, role} = req.auth;
+
+        const orderId = req.params.orderId;
+
+        if(role === Roles.ADMIN || role === Roles.MANAGER) {
+            const order = await this.orderService.getOrderById(orderId, {tenantId: 1});
+            console.log({order});
+            if(!order) {
+                return next(createHttpError(400, "Order does not exist"));
+            }
+            const isMyRestaurantOrder = role === Roles.ADMIN ? true : (tenantId === order.tenantId);
+
+            if(!isMyRestaurantOrder) {
+                return next(createHttpError(403, "Operation Not Allowed"));
+            }
+            const status = req.body.status;
+            if(!Object.values(OrderStatus).includes(status)) {
+                return next(createHttpError(400, "Invalid status"));
+            }
+            const updatedOrder = await this.orderService.findOrderByIdAndUpdate(orderId, { orderStatus: status });
+
+            return res.json({ id : updatedOrder._id });
+        }
+
+        return next(createHttpError(403, "Operation not allowed"));
+    }
 }

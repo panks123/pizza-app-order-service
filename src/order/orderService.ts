@@ -138,4 +138,15 @@ export class OrderService {
       .exec();
     return order;
   };
+  
+  findOrderByIdAndUpdate = async (orderId: string, update) => {
+    const upadtedOrder = await OrderModel.findOneAndUpdate(
+      { _id: orderId },
+      update,
+      { new: true }
+    );
+    // TODO: Send message to kafka to update the order status
+    // await this.broker.sendMessage("order", JSON.stringify(upadtedOrder));
+    return upadtedOrder;
+  }
 }

@@ -39,4 +39,10 @@ router.get(
     asyncWrapper(orderController.getOrderDetails)
 )
 
+router.patch(
+    '/change-status/:orderId',
+    authenticate,
+    asyncWrapper(orderController.changeStatus)
+)
+
 export default router;
