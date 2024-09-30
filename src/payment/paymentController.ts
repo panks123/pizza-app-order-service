@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { PaymentGateway } from "./paymentTypes";
 import { OrderModel } from "../order/orderModel";
-import { PaymentStatus } from "../order/orderTypes";
+import { OrderEvent, PaymentStatus } from "../order/orderTypes";
 import { MessageBroker } from "../types/broker";
 
 export class PaymentController {
@@ -18,7 +18,11 @@ export class PaymentController {
                 paymentStatus: isPaymentSuccessFul ? PaymentStatus.PAID : PaymentStatus.FAILED
             }, { new: true });
             // TODO - What will happen if the broker message send failed?
-            await this.broker.sendMessage("order", JSON.stringify(updatedOrder));
+            const brokerMessage = {
+                event_type: OrderEvent.PAYMENT_STATUS_UPDATE,
+                data: updatedOrder,
+              };
+            await this.broker.sendMessage("order", JSON.stringify(brokerMessage), updatedOrder._id.toString());
         }
         return res.json({success: true});
     }

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { OrderModel } from "./orderModel";
-import { Order, PaymentMode } from "./orderTypes";
+import { Order, OrderEvent, PaymentMode } from "./orderTypes";
 import idempotencyModel from "../idempotency/idempotencyModel";
 import { PaymentGateway, PaymentSession } from "../payment/paymentTypes";
 import { MessageBroker } from "../types/broker";
@@ -39,25 +39,29 @@ export class OrderService {
         session.endSession();
       }
     }
-
+    let paymentSession: PaymentSession = null;
     if (orderDetails.paymentMode === PaymentMode.CARD) {
-      const paymentSession = await this.paymentGateway.createSession({
+      paymentSession = await this.paymentGateway.createSession({
         amount: orderDetails.total,
         orderId: newOrder[0]._id.toString(),
         tenantId: orderDetails.tenantId,
         currency: "inr",
         idempotencyKey,
       });
-
-      // Send message to kafka to update the order status
-      await this.broker.sendMessage("order", JSON.stringify(newOrder[0]));
-      return { orderDetails: newOrder[0], paymentSession };
     }
 
     // Send message to kafka to update the order status
-    await this.broker.sendMessage("order", JSON.stringify(newOrder[0]));
-    return { orderDetails: newOrder[0], paymentSession: null };
-    // return newOrder;
+    const brokerMessage = {
+      event_type: OrderEvent.ORDER_CREATE,
+      data: newOrder[0],
+    };
+    await this.broker.sendMessage(
+      "order",
+      JSON.stringify(brokerMessage),
+      newOrder[0]._id.toString(),
+    );
+
+    return { orderDetails: newOrder[0], paymentSession };
   };
 
   getOrdersByCustomerId = async (
@@ -106,7 +110,7 @@ export class OrderService {
         },
       },
       {
-        $unwind: { path: '$customerInfo', preserveNullAndEmptyArrays: true },
+        $unwind: { path: "$customerInfo", preserveNullAndEmptyArrays: true },
       },
       {
         $project: {
@@ -138,15 +142,28 @@ export class OrderService {
       .exec();
     return order;
   };
-  
+
   findOrderByIdAndUpdate = async (orderId: string, update) => {
     const upadtedOrder = await OrderModel.findOneAndUpdate(
       { _id: orderId },
       update,
-      { new: true }
+      { new: true },
     );
     // TODO: Send message to kafka to update the order status
     // await this.broker.sendMessage("order", JSON.stringify(upadtedOrder));
+    if(update.orderStatus) { // order status being updated
+      const brokerMessage = {
+        event_type: OrderEvent.ORDER_STATUS_UPDATE,
+        data: upadtedOrder,
+      };
+
+      this.broker.sendMessage(
+        "order",
+        JSON.stringify(brokerMessage),
+        upadtedOrder._id.toString(),
+      );
+    }
+
     return upadtedOrder;
-  }
+  };
 }
