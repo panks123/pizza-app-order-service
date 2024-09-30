@@ -6,6 +6,7 @@ import { PaymentGateway, PaymentSession } from "../payment/paymentTypes";
 import { MessageBroker } from "../types/broker";
 import { PaginateQuery } from "../types";
 import { paginationLabels } from "../config/paginateLabels";
+import CustomerModel from "../customer/customerModel";
 
 export class OrderService {
   constructor(
@@ -50,10 +51,11 @@ export class OrderService {
       });
     }
 
+    const customer = await CustomerModel.findOne({ _id: newOrder[0].customerId });
     // Send message to kafka to update the order status
     const brokerMessage = {
       event_type: OrderEvent.ORDER_CREATE,
-      data: newOrder[0],
+      data: {...newOrder[0], customerId: customer },
     };
     await this.broker.sendMessage(
       "order",
@@ -61,7 +63,7 @@ export class OrderService {
       newOrder[0]._id.toString(),
     );
 
-    return { orderDetails: newOrder[0], paymentSession };
+    return { orderDetails: {...newOrder[0], customerId: customer }, paymentSession };
   };
 
   getOrdersByCustomerId = async (
@@ -149,12 +151,15 @@ export class OrderService {
       update,
       { new: true },
     );
+
+    const customer = await CustomerModel.findOne({ _id: upadtedOrder.customerId });
+
     // TODO: Send message to kafka to update the order status
     // await this.broker.sendMessage("order", JSON.stringify(upadtedOrder));
     if(update.orderStatus) { // order status being updated
       const brokerMessage = {
         event_type: OrderEvent.ORDER_STATUS_UPDATE,
-        data: upadtedOrder,
+        data: {...upadtedOrder.toObject(), customerId: customer},
       };
 
       this.broker.sendMessage(
@@ -164,6 +169,6 @@ export class OrderService {
       );
     }
 
-    return upadtedOrder;
+    return {...upadtedOrder.toObject(), customerId: customer};
   };
 }
