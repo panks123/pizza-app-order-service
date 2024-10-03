@@ -5,8 +5,23 @@ import customerRouter from "./customer/customerRouter";
 import couponRouter from "./coupon/couponRouter";
 import orderRouter from "./order/orderRouter";
 import paymentRouter from "./payment/paymentRouter";
+import cors from "cors";
+import config from "config";
 
 const app = express();
+
+const ALLOWED_DOMAINS = [
+  String(config.get("frontend.clientUI")),
+  String(config.get("frontend.adminUI")),
+];
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+app.use(
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  cors({
+      origin: ALLOWED_DOMAINS,
+  }),
+);
 app.use(cookieParser());
 app.use(express.json());
 
